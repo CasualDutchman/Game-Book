@@ -5,6 +5,7 @@ bin-release/
 GameBook/export/
 export/
 haxe/
+flash/
 [Oo]bj/ # FlashDevelop obj
 [Bb]in/ # FlashDevelop bin
 

@@ -1,3 +1,11 @@
+/**
+ * I will use one database slot to hold names of stories
+ * Those will open a new database slot, based on that story name.
+ * There databases contain the story and choices.
+ * 
+ * at the end it will be saved to a user database
+ */
+
 package;
 
 import flixel.FlxState;
@@ -6,6 +14,9 @@ import flixel.text.FlxText;
 
 class PlayState extends FlxState
 {
+	private var currentScene:Int = 0;
+	private var currentStory:Int = 0;
+	
 	private var _text:FlxText;
 	
 	override public function create():Void
