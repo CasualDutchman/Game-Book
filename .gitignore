@@ -2,6 +2,7 @@
 bin/
 bin-debug/
 bin-release/
+GameBook/export/
 export/
 haxe/
 [Oo]bj/ # FlashDevelop obj
