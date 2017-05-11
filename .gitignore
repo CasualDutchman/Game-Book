@@ -9,6 +9,7 @@ haxe/
 
 # Other files and folders
 .settings/
+.build
 
 # Executables
 *.swf
