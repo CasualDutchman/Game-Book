@@ -19,19 +19,17 @@ class PlayState extends FlxState
 	
 	private var _text:FlxText;
 	
+	private var currentNode:Node;
+	
 	override public function create():Void
 	{
-		var cnx = Sqlite.open(AssetPaths.mybase__db);// "mybase.db");
-		
-		var rset = cnx.request("SELECT * FROM test");
-		
-		for ( row in rset ) 
+		currentNode = new Node(0, 0);
+		add(currentNode);
+		add(currentNode._storyLine);
+		for (i in 0...5)
 		{
-			_text = new FlxText(row.posX, row.posY, 0, row.actualText, 20);
-			add(_text);
+			add(currentNode.optionLines[i]);
 		}
-		
-		cnx.close();
 		
 		super.create();
 	}
