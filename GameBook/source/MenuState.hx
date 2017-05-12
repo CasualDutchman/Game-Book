@@ -17,10 +17,18 @@ class MenuState extends FlxState
 		FlxG.camera.zoom = 2;
 		
 		newGameButton = new FlxButton(0, 150, "New Game", OnNewButton);
+		newGameButton.loadGraphic(AssetPaths.button__png, true, 160, 40);
+		newGameButton.graphicLoaded();
+		newGameButton.updateHitbox();
+		newGameButton.label.offset.add(0, -10);
 		newGameButton.screenCenter(FlxAxes.X);
 		add(newGameButton);
 		
-		continueGameButton = new FlxButton(0, 175, "Continue", OnContinueButton);
+		continueGameButton = new FlxButton(0, 200, "Continue", OnContinueButton);
+		continueGameButton.loadGraphic(AssetPaths.button__png, true, 160, 40);
+		continueGameButton.graphicLoaded();
+		continueGameButton.updateHitbox();
+		continueGameButton.label.offset.add(0, -10);
 		continueGameButton.screenCenter(FlxAxes.X);
 		add(continueGameButton);
 		

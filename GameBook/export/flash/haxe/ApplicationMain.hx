@@ -34,6 +34,10 @@ class ApplicationMain {
 		types.push (lime.Assets.AssetType.TEXT);
 		
 		
+		urls.push ("assets/data/mybase.db");
+		types.push (lime.Assets.AssetType.BINARY);
+		
+		
 		urls.push ("assets/images/images-go-here.txt");
 		types.push (lime.Assets.AssetType.TEXT);
 		
@@ -131,7 +135,7 @@ class ApplicationMain {
 		
 		config = {
 			
-			build: "1",
+			build: "2",
 			company: "HaxeFlixel",
 			file: "GameBook",
 			fps: 60,
