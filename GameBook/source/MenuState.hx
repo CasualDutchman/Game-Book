@@ -16,7 +16,7 @@ class MenuState extends FlxState
 	{				
 		FlxG.camera.zoom = 2;
 		
-		newGameButton = new FlxButton(0, 150, "New Game", OnNewButton);
+		newGameButton = new FlxButton(0, 250, "New Game", OnNewButton);
 		newGameButton.loadGraphic(AssetPaths.button__png, true, 160, 40);
 		newGameButton.graphicLoaded();
 		newGameButton.updateHitbox();
@@ -24,7 +24,7 @@ class MenuState extends FlxState
 		newGameButton.screenCenter(FlxAxes.X);
 		add(newGameButton);
 		
-		continueGameButton = new FlxButton(0, 200, "Continue", OnContinueButton);
+		continueGameButton = new FlxButton(0, 300, "Continue", OnContinueButton);
 		continueGameButton.loadGraphic(AssetPaths.button__png, true, 160, 40);
 		continueGameButton.graphicLoaded();
 		continueGameButton.updateHitbox();
@@ -37,7 +37,7 @@ class MenuState extends FlxState
 	
 	function OnNewButton() 
 	{
-		FlxG.switchState(new PlayState());
+		FlxG.switchState(new SelectState());
 	}
 	
 	function OnContinueButton() 
