@@ -25,7 +25,10 @@ class PlayState extends FlxState
 	private var currentStory:Int = 0;
 	
 	private var _exitText:FlxText;
-		
+	
+	private var sql:sys.db.Connection;
+	var rset:sys.db.ResultSet;
+	
 	public var id:Int = 0;
 	public var storyID:Int = 0;
 	
@@ -38,6 +41,10 @@ class PlayState extends FlxState
 	
 	override public function create():Void
 	{		
+		sql = Sqlite.open(AssetPaths.database__db);
+		
+		rset = sql.request("SELECT * FROM " + sql.quote("story" + storyID + ""));
+		
 		image = new FlxSprite(20, 20);
 		image.scale.add(5, 5);
 		add(image);
@@ -95,6 +102,9 @@ class PlayState extends FlxState
 					}
 					else
 					{
+						sql.request("INSERT INTO User (Name,Scene,Story,Score) VALUES ('" + deadInputText.text + "'," + id + "," + storyID + "," + 100 + ")");
+						sql.close();
+						
 						FlxG.switchState(new MenuState());
 					}
 				}
@@ -122,10 +132,6 @@ class PlayState extends FlxState
 	{
 		image.kill();
 		
-		var sql = Sqlite.open(AssetPaths.database__db);
-		
-		var rset = sql.request("SELECT * FROM " + sql.quote("story" + storyID + ""));
-		
 		var mainStoryY:Float= 0;
 		
 		for ( row in rset ) 
@@ -139,6 +145,18 @@ class PlayState extends FlxState
 				
 				if (row.Dead == 1)
 				{
+					var userdata = sql.request("SELECT * FROM User");
+					
+					var playerScoreText:String = "";
+					
+					for (data in userdata)
+					{
+						if (data.ID != 0)
+						{
+							playerScoreText += data.Name + ": " + data.Score + "\n";
+						}
+					}
+					
 					image.kill();
 					_exitText.kill();
 					
@@ -158,7 +176,7 @@ class PlayState extends FlxState
 					deadInputText.focusGained = function(){ deadInputText.text = ""; deadInputText.caretIndex = 0; };
 					add(deadInputText);
 					
-					deadScoreList = new FlxText(30, 300, 300, "Score:\nPlayer1: 100\nPlayer2: 300", 20);
+					deadScoreList = new FlxText(30, 300, 300, "Score:\n" + playerScoreText, 20);
 					deadScoreList.screenCenter(FlxAxes.X);
 					add(deadScoreList);
 					break;
@@ -224,7 +242,5 @@ class PlayState extends FlxState
 				break;
 			}
 		}
-		
-		sql.close();
 	}
 }
