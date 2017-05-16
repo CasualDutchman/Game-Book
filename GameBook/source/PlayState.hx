@@ -34,7 +34,7 @@ class PlayState extends FlxState
 	public var optionLines:Array<FlxText> = new Array<FlxText>();
 	
 	public var deadInputText:FlxInputText;
-	
+	public var deadScoreList:FlxText;
 	
 	override public function create():Void
 	{		
@@ -87,9 +87,16 @@ class PlayState extends FlxState
 			{
 				if(field.overlapsPoint(FlxG.mouse.getScreenPosition()))
 				{
-					id = field.ID;
-					LoadNode();
-					break;
+					if (field.ID >= 0)
+					{
+						id = field.ID;
+						LoadNode();
+						break;
+					}
+					else
+					{
+						FlxG.switchState(new MenuState());
+					}
 				}
 			}
 		}
@@ -132,11 +139,29 @@ class PlayState extends FlxState
 				
 				if (row.Dead == 1)
 				{
-					deadInputText = new FlxInputText(30, 200, 300, "Enter name", 20);
+					image.kill();
+					_exitText.kill();
+					
+					_storyLine.y = 200;
+					optionLines[0].text = "- Go to main menu";
+					optionLines[0].ID = -1;
+					optionLines[0].y = FlxG.height - 100;
+					
+					for (i in 0...4)
+					{
+						optionLines[i + 1].text = "";
+					}
+					
+					deadInputText = new FlxInputText(30, 250, 300, "Enter name", 20);
+					deadInputText.screenCenter(FlxAxes.X);
 					deadInputText.maxLength = 20;
 					deadInputText.focusGained = function(){ deadInputText.text = ""; deadInputText.caretIndex = 0; };
 					add(deadInputText);
-					//break;
+					
+					deadScoreList = new FlxText(30, 300, 300, "Score:\nPlayer1: 100\nPlayer2: 300", 20);
+					deadScoreList.screenCenter(FlxAxes.X);
+					add(deadScoreList);
+					break;
 				}
 				
 				if (row.Line1 != null)
