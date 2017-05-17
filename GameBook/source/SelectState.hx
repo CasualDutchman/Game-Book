@@ -47,6 +47,10 @@ class SelectState extends FlxState
 		super.create();
 	}
 	
+	/**
+	 * update every frame
+	 * @param	elapsed
+	 */
 	override public function update(elapsed:Float):Void
 	{
 		for (field in optionLines)

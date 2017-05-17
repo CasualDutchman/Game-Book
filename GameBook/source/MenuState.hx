@@ -35,16 +35,26 @@ class MenuState extends FlxState
 		super.create();
 	}
 	
+	/**
+	 * Callback for the newGameButton
+	 */
 	function OnNewButton() 
 	{
 		FlxG.switchState(new SelectState());
 	}
 	
+	/**
+	 * Callback for the continueGameButton
+	 */
 	function OnContinueButton() 
 	{
 		FlxG.switchState(new PlayState());
 	}
 	
+	/**
+	 * update every frame
+	 * @param	elapsed
+	 */
 	override public function update(elapsed:Float):Void
 	{
 		super.update(elapsed);

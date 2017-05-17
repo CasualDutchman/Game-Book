@@ -32,6 +32,12 @@ class PlayState extends FlxState
 	public var id:Int = 0;
 	public var storyID:Int = 0;
 	
+	public var timer:Float = 0.0;
+	public var maxTimer:Float;
+	public var timerSprite:FlxSprite;
+	public var isTimer:Bool = false;
+	public var timerID:Int;
+	
 	public var image:FlxSprite;
 	public var _storyLine:FlxText;
 	public var optionLines:Array<FlxText> = new Array<FlxText>();
@@ -45,11 +51,14 @@ class PlayState extends FlxState
 		
 		rset = sql.request("SELECT * FROM " + sql.quote("story" + storyID + ""));
 		
+		timerSprite = new FlxSprite((FlxG.width - 1000) / 2, 550);
+		timerSprite.makeGraphic(1000, 10);
+		
 		image = new FlxSprite(20, 20);
 		image.scale.add(5, 5);
 		add(image);
 		
-		_exitText = new FlxText(10, FlxG.height - 20 - 10, "Exit", 20);
+		_exitText = new FlxText(10, FlxG.height - 20 - 20, "Exit", 20);
 		_exitText.alpha = 0.5;
 		add(_exitText);
 		
@@ -74,8 +83,27 @@ class PlayState extends FlxState
 		LoadNode();
 	}
 	
+	/**
+	 * update every frame
+	 * @param	elapsed
+	 */
 	override public function update(elapsed:Float):Void
 	{
+		if (isTimer)
+		{
+			timer++;
+			
+			
+			timerSprite.setGraphicSize(1000 - Std.int((timer / maxTimer) * 1000), 20);
+			
+			if (timer >= maxTimer)
+			{
+				id = timerID;
+				ResetTimer();
+				LoadNode();
+			}
+		}
+		
 		for (field in optionLines)
 		{
 			if(field.overlapsPoint(FlxG.mouse.getScreenPosition()))
@@ -97,6 +125,7 @@ class PlayState extends FlxState
 					if (field.ID >= 0)
 					{
 						id = field.ID;
+						ResetTimer();
 						LoadNode();
 						break;
 					}
@@ -128,6 +157,19 @@ class PlayState extends FlxState
 		super.update(elapsed);
 	}
 	
+	/**
+	 * Reset the timer
+	 */
+	private function ResetTimer()
+	{
+		isTimer = false;
+		timerSprite.kill();
+		timer = 0;
+	}
+	
+	/**
+	 * Load a new set of the story
+	 */
 	public function LoadNode()
 	{
 		image.kill();
@@ -176,10 +218,19 @@ class PlayState extends FlxState
 					deadInputText.focusGained = function(){ deadInputText.text = ""; deadInputText.caretIndex = 0; };
 					add(deadInputText);
 					
-					deadScoreList = new FlxText(30, 300, 300, "Score:\n" + playerScoreText, 20);
+					deadScoreList = new FlxText(30, 300, 500, "Score:\n" + playerScoreText, 20);
 					deadScoreList.screenCenter(FlxAxes.X);
 					add(deadScoreList);
 					break;
+				}
+				
+				if (row.MaxTimer != 0)
+				{
+					Lib.println("GOTIMER");
+					isTimer = true;
+					maxTimer = row.MaxTimer;
+					timerID = row.TimerDefault;
+					add(timerSprite);
 				}
 				
 				if (row.Line1 != null)
