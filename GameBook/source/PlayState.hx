@@ -31,6 +31,7 @@ class PlayState extends FlxState
 	
 	public var id:Int = 0;
 	public var storyID:Int = 0;
+	public var score:Int = 0;
 	
 	public var timer:Float = 0.0;
 	public var maxTimer:Float;
@@ -80,7 +81,7 @@ class PlayState extends FlxState
 		
 		super.create();
 		
-		LoadNode();
+		LoadScene();
 	}
 	
 	/**
@@ -100,7 +101,7 @@ class PlayState extends FlxState
 			{
 				id = timerID;
 				ResetTimer();
-				LoadNode();
+				LoadScene();
 			}
 		}
 		
@@ -126,15 +127,22 @@ class PlayState extends FlxState
 					{
 						id = field.ID;
 						ResetTimer();
-						LoadNode();
+						LoadScene();
+						
+						score += 10;
+						
+						sql.request("UPDATE User SET Story = " + storyID + ", Scene = " + id + ", Score = " + score + " WHERE ID = 0");
+						
 						break;
 					}
 					else
 					{
-						sql.request("INSERT INTO User (Name,Scene,Story,Score) VALUES ('" + deadInputText.text + "'," + id + "," + storyID + "," + 100 + ")");
+						sql.request("INSERT INTO User (Name,Scene,Story,Score) VALUES ('" + deadInputText.text + "'," + id + "," + storyID + "," + score + ")");
+						sql.request("UPDATE User SET Story = " + -1 + ", Scene = " + -1 + ", Score = " + 0 + " WHERE ID = 0");
 						sql.close();
 						
-						FlxG.switchState(new MenuState());
+						score = 0;
+						FlxG.switchState(new HallOfFameState());
 					}
 				}
 			}
@@ -146,6 +154,8 @@ class PlayState extends FlxState
 			
 			if (FlxG.mouse.justReleased)
 			{
+				sql.request("UPDATE User SET Story = " + storyID + ", Scene = " + id + ", Score = " + score + " WHERE ID = 0");
+				sql.close();
 				FlxG.switchState(new MenuState());
 			}
 		}
@@ -165,12 +175,13 @@ class PlayState extends FlxState
 		isTimer = false;
 		timerSprite.kill();
 		timer = 0;
+		timerID = 0;
 	}
 	
 	/**
 	 * Load a new set of the story
 	 */
-	public function LoadNode()
+	public function LoadScene()
 	{
 		image.kill();
 		
@@ -186,19 +197,7 @@ class PlayState extends FlxState
 				image.reset((FlxG.width / 2) - 60, (FlxG.height / 2) - 34 - 100);
 				
 				if (row.Dead == 1)
-				{
-					var userdata = sql.request("SELECT * FROM User");
-					
-					var playerScoreText:String = "";
-					
-					for (data in userdata)
-					{
-						if (data.ID != 0)
-						{
-							playerScoreText += data.Name + ": " + data.Score + "\n";
-						}
-					}
-					
+				{					
 					image.kill();
 					_exitText.kill();
 					
@@ -217,10 +216,6 @@ class PlayState extends FlxState
 					deadInputText.maxLength = 20;
 					deadInputText.focusGained = function(){ deadInputText.text = ""; deadInputText.caretIndex = 0; };
 					add(deadInputText);
-					
-					deadScoreList = new FlxText(30, 300, 500, "Score:\n" + playerScoreText, 20);
-					deadScoreList.screenCenter(FlxAxes.X);
-					add(deadScoreList);
 					break;
 				}
 				

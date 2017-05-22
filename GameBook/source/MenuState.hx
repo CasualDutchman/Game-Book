@@ -6,14 +6,36 @@ import flixel.text.FlxText;
 import flixel.ui.FlxButton;
 import flixel.FlxG;
 import flixel.util.FlxAxes;
+import sys.db.Sqlite;
 
 class MenuState extends FlxState
 {
 	var newGameButton:FlxButton;
 	var continueGameButton:FlxButton;
+	var hallOfFameButton:FlxButton;
+	
+	private var sql:sys.db.Connection;
+	
+	var goToStory:Int;
+	var goToScene:Int;
+	var goToScore:Int;
 	
 	override public function create():Void
 	{				
+		sql = Sqlite.open(AssetPaths.database__db);
+		
+		var userdata = sql.request("SELECT * FROM User");
+		
+		for (data in userdata)
+		{
+			if (data.ID == 0)
+			{
+				goToScene = data.Scene;
+				goToStory = data.Story;
+				goToScore = data.Score;
+			}
+		}
+		
 		FlxG.camera.zoom = 2;
 		
 		newGameButton = new FlxButton(0, 250, "New Game", OnNewButton);
@@ -32,6 +54,14 @@ class MenuState extends FlxState
 		continueGameButton.screenCenter(FlxAxes.X);
 		add(continueGameButton);
 		
+		hallOfFameButton = new FlxButton(0, 350, "Hall of fame", OnHallOfFame);
+		hallOfFameButton.loadGraphic(AssetPaths.button__png, true, 160, 40);
+		hallOfFameButton.graphicLoaded();
+		hallOfFameButton.updateHitbox();
+		hallOfFameButton.label.offset.add(0, -10);
+		hallOfFameButton.screenCenter(FlxAxes.X);
+		add(hallOfFameButton);
+		
 		super.create();
 	}
 	
@@ -48,7 +78,28 @@ class MenuState extends FlxState
 	 */
 	function OnContinueButton() 
 	{
-		FlxG.switchState(new PlayState());
+		var newPlayState:PlayState = new PlayState();
+		newPlayState.storyID = goToStory;
+		newPlayState.id = goToScene;
+		newPlayState.score = goToScore;
+		
+		if (goToScene == -1 || goToStory == -1)
+		{
+			FlxG.switchState(new SelectState());
+		}
+		else
+		{
+			FlxG.switchState(newPlayState);
+		}
+		sql.close();
+	}
+	
+	/**
+	 * Callback for the hallOfFameButton
+	 */
+	function OnHallOfFame() 
+	{
+		FlxG.switchState(new HallOfFameState());
 	}
 	
 	/**
