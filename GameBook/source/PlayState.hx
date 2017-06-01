@@ -81,7 +81,7 @@ class PlayState extends FlxState
 		
 		super.create();
 		
-		LoadScene();
+		ReloadScene();
 	}
 	
 	/**
@@ -101,7 +101,7 @@ class PlayState extends FlxState
 			{
 				id = timerID;
 				ResetTimer();
-				LoadScene();
+				ReloadScene();
 			}
 		}
 		
@@ -127,7 +127,7 @@ class PlayState extends FlxState
 					{
 						id = field.ID;
 						ResetTimer();
-						LoadScene();
+						ReloadScene();
 						
 						score += 10;
 						
@@ -135,7 +135,15 @@ class PlayState extends FlxState
 						
 						break;
 					}
-					else
+					else if(field.ID == -1) // when lose
+					{
+						sql.request("UPDATE User SET Story = " + -1 + ", Scene = " + -1 + ", Score = " + 0 + " WHERE ID = 0");
+						sql.close();
+						
+						score = 0;
+						FlxG.switchState(new MenuState());
+					}
+					else if(field.ID == -2) // when win
 					{
 						sql.request("INSERT INTO User (Name,Scene,Story,Score) VALUES ('" + deadInputText.text + "'," + id + "," + storyID + "," + score + ")");
 						sql.request("UPDATE User SET Story = " + -1 + ", Scene = " + -1 + ", Score = " + 0 + " WHERE ID = 0");
@@ -181,7 +189,7 @@ class PlayState extends FlxState
 	/**
 	 * Load a new set of the story
 	 */
-	public function LoadScene()
+	public function ReloadScene()
 	{
 		image.kill();
 		
@@ -196,7 +204,7 @@ class PlayState extends FlxState
 				image.loadGraphic("assets/images/" + row.Image + ".png");
 				image.reset((FlxG.width / 2) - 60, (FlxG.height / 2) - 34 - 100);
 				
-				if (row.Dead == 1)
+				if (row.Dead == 1) // lose/die
 				{					
 					image.kill();
 					_exitText.kill();
@@ -204,6 +212,23 @@ class PlayState extends FlxState
 					_storyLine.y = 200;
 					optionLines[0].text = "- Go to main menu";
 					optionLines[0].ID = -1;
+					optionLines[0].y = FlxG.height - 100;
+					
+					for (i in 0...4)
+					{
+						optionLines[i + 1].text = "";
+					}
+					break;
+				}
+				
+				if (row.Dead == 2) // Win
+				{					
+					image.kill();
+					_exitText.kill();
+					
+					_storyLine.y = 200;
+					optionLines[0].text = "- Go to main menu";
+					optionLines[0].ID = -2;
 					optionLines[0].y = FlxG.height - 100;
 					
 					for (i in 0...4)
