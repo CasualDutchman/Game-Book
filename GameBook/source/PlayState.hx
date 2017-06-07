@@ -52,6 +52,18 @@ class PlayState extends FlxState
 		
 		rset = sql.request("SELECT * FROM " + sql.quote("story" + storyID + ""));
 		
+		SetupScene();
+		
+		super.create();
+		
+		ReloadScene();
+	}
+	
+	/**
+	 * Setups up the major components for the scene
+	 */
+	function SetupScene()
+	{
 		timerSprite = new FlxSprite((FlxG.width - 1000) / 2, 550);
 		timerSprite.makeGraphic(1000, 10);
 		
@@ -78,10 +90,6 @@ class PlayState extends FlxState
 			optionLines[i].alignment = FlxTextAlign.CENTER;
 			add(optionLines[i]);
 		}
-		
-		super.create();
-		
-		ReloadScene();
 	}
 	
 	/**
@@ -93,7 +101,6 @@ class PlayState extends FlxState
 		if (isTimer)
 		{
 			timer++;
-			
 			
 			timerSprite.setGraphicSize(1000 - Std.int((timer / maxTimer) * 1000), 20);
 			
@@ -123,17 +130,24 @@ class PlayState extends FlxState
 			{
 				if(field.overlapsPoint(FlxG.mouse.getScreenPosition()))
 				{
+					trace(field.ID);
+					trace("---");
+					
 					if (field.ID >= 0)
 					{
+						
 						id = field.ID;
 						ResetTimer();
+						
+						trace("woohoo");
 						ReloadScene();
+						trace("Did reload");
 						
 						score += 10;
 						
 						sql.request("UPDATE User SET Story = " + storyID + ", Scene = " + id + ", Score = " + score + " WHERE ID = 0");
 						
-						break;
+						return;
 					}
 					else if(field.ID == -1) // when lose
 					{
@@ -142,6 +156,7 @@ class PlayState extends FlxState
 						
 						score = 0;
 						FlxG.switchState(new MenuState());
+						return;
 					}
 					else if(field.ID == -2) // when win
 					{
@@ -151,6 +166,7 @@ class PlayState extends FlxState
 						
 						score = 0;
 						FlxG.switchState(new HallOfFameState());
+						return;
 					}
 				}
 			}
@@ -195,10 +211,17 @@ class PlayState extends FlxState
 		
 		var mainStoryY:Float= 0;
 		
+		trace("I am in reloadScene");
+		
+		trace("Its something: " + rset.length);
+		
 		for ( row in rset ) 
 		{
+			trace("I am in the for loop");
 			if (row.NodeID == id)
 			{
+				trace("reload scene id: " + id);
+				
 				_storyLine.text = row.StoryLine;
 				
 				image.loadGraphic("assets/images/" + row.Image + ".png");
@@ -209,22 +232,28 @@ class PlayState extends FlxState
 					image.kill();
 					_exitText.kill();
 					
+					trace("Set to -1");
+					
 					_storyLine.y = 200;
 					optionLines[0].text = "- Go to main menu";
 					optionLines[0].ID = -1;
 					optionLines[0].y = FlxG.height - 100;
 					
+					trace(optionLines[0].ID);
+					
 					for (i in 0...4)
 					{
 						optionLines[i + 1].text = "";
 					}
-					break;
+					return;
 				}
 				
 				if (row.Dead == 2) // Win
 				{					
 					image.kill();
 					_exitText.kill();
+					
+					trace("Set to -2");
 					
 					_storyLine.y = 200;
 					optionLines[0].text = "- Go to main menu";
