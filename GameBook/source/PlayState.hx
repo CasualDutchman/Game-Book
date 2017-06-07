@@ -21,7 +21,6 @@ import flixel.text.FlxText;
 
 class PlayState extends FlxState
 {
-	private var currentScene:Int = 0;
 	private var currentStory:Int = 0;
 	
 	private var _exitText:FlxText;
@@ -46,17 +45,24 @@ class PlayState extends FlxState
 	public var deadInputText:FlxInputText;
 	public var deadScoreList:FlxText;
 	
+	var loader:Loader;
+	var currentScene:Scene;
+	
 	override public function create():Void
 	{		
 		sql = Sqlite.open(AssetPaths.database__db);
 		
 		rset = sql.request("SELECT * FROM " + sql.quote("story" + storyID + ""));
 		
+		loader = new Loader(storyID);
+		
 		SetupScene();
+		
+		
 		
 		super.create();
 		
-		ReloadScene();
+		ReloadScene();	
 	}
 	
 	/**
@@ -98,6 +104,7 @@ class PlayState extends FlxState
 	 */
 	override public function update(elapsed:Float):Void
 	{
+		//If there is a timer, then update the timer
 		if (isTimer)
 		{
 			timer++;
@@ -117,31 +124,15 @@ class PlayState extends FlxState
 			if(field.overlapsPoint(FlxG.mouse.getScreenPosition()))
 			{
 				field.color = FlxColor.GRAY;
-			}
-			else
-			{
-				field.color = FlxColor.WHITE;
-			}
-		}
-		
-		if (FlxG.mouse.justReleased)
-		{
-			for (field in optionLines)
-			{
-				if(field.overlapsPoint(FlxG.mouse.getScreenPosition()))
+				
+				if (FlxG.mouse.justReleased)
 				{
-					trace(field.ID);
-					trace("---");
-					
-					if (field.ID >= 0)
+					if (field.ID >= 0) // change id of scene and reload the scene
 					{
-						
 						id = field.ID;
 						ResetTimer();
 						
-						trace("woohoo");
 						ReloadScene();
-						trace("Did reload");
 						
 						score += 10;
 						
@@ -169,6 +160,10 @@ class PlayState extends FlxState
 						return;
 					}
 				}
+			}
+			else
+			{
+				field.color = FlxColor.WHITE;
 			}
 		}
 		
@@ -203,7 +198,7 @@ class PlayState extends FlxState
 	}
 	
 	/**
-	 * Load a new set of the story
+	 * Load a new scene of the story
 	 */
 	public function ReloadScene()
 	{
@@ -211,136 +206,74 @@ class PlayState extends FlxState
 		
 		var mainStoryY:Float= 0;
 		
-		trace("I am in reloadScene");
+		currentScene = loader.GetScene(id);	
 		
-		trace("Its something: " + rset.length);
+		_storyLine.text = currentScene.storyLine;
 		
-		for ( row in rset ) 
+		image.loadGraphic("assets/images/" + currentScene.imagePath + ".png");
+		image.reset((FlxG.width / 2) - 60, (FlxG.height / 2) - 34 - 100);
+		
+		if (currentScene.winLose == 1) // lose/die
+		{					
+			SetupEnd();
+			return;
+		}
+		
+		if (currentScene.winLose == 2) // Win
+		{					
+			SetupEnd();
+			
+			deadInputText = new FlxInputText(30, 250, 300, "Enter name", 20);
+			deadInputText.screenCenter(FlxAxes.X);
+			deadInputText.maxLength = 20;
+			deadInputText.focusGained = function(){ deadInputText.text = ""; deadInputText.caretIndex = 0; };
+			add(deadInputText);
+		}
+		
+		if (currentScene.hasTimer)
 		{
-			trace("I am in the for loop");
-			if (row.NodeID == id)
+			isTimer = currentScene.hasTimer;
+			maxTimer = currentScene.maxTimer;
+			timerID = currentScene.timerDefault;
+			add(timerSprite);
+		}
+		
+		for (i in 0...5)
+		{
+			if (currentScene.optionLines[i] != null)
 			{
-				trace("reload scene id: " + id);
-				
-				_storyLine.text = row.StoryLine;
-				
-				image.loadGraphic("assets/images/" + row.Image + ".png");
-				image.reset((FlxG.width / 2) - 60, (FlxG.height / 2) - 34 - 100);
-				
-				if (row.Dead == 1) // lose/die
-				{					
-					image.kill();
-					_exitText.kill();
-					
-					trace("Set to -1");
-					
-					_storyLine.y = 200;
-					optionLines[0].text = "- Go to main menu";
-					optionLines[0].ID = -1;
-					optionLines[0].y = FlxG.height - 100;
-					
-					trace(optionLines[0].ID);
-					
-					for (i in 0...4)
-					{
-						optionLines[i + 1].text = "";
-					}
-					return;
-				}
-				
-				if (row.Dead == 2) // Win
-				{					
-					image.kill();
-					_exitText.kill();
-					
-					trace("Set to -2");
-					
-					_storyLine.y = 200;
-					optionLines[0].text = "- Go to main menu";
-					optionLines[0].ID = -2;
-					optionLines[0].y = FlxG.height - 100;
-					
-					for (i in 0...4)
-					{
-						optionLines[i + 1].text = "";
-					}
-					
-					deadInputText = new FlxInputText(30, 250, 300, "Enter name", 20);
-					deadInputText.screenCenter(FlxAxes.X);
-					deadInputText.maxLength = 20;
-					deadInputText.focusGained = function(){ deadInputText.text = ""; deadInputText.caretIndex = 0; };
-					add(deadInputText);
-					break;
-				}
-				
-				if (row.MaxTimer != 0)
-				{
-					Lib.println("GOTIMER");
-					isTimer = true;
-					maxTimer = row.MaxTimer;
-					timerID = row.TimerDefault;
-					add(timerSprite);
-				}
-				
-				if (row.Line1 != null)
-				{
-					optionLines[0].text = "- " + row.Line1;
-					optionLines[0].ID = row.GoToID1;
-					mainStoryY += optionLines[0].height;
-				}
-				
-				if (row.Line2 != null)
-				{
-					optionLines[1].text = "- " + row.Line2;
-					optionLines[1].ID = row.GoToID2;
-					optionLines[1].y = optionLines[0].y - optionLines[1].height - 5;
-					mainStoryY += optionLines[1].height;
-				}
-				else
-				{
-					optionLines[1].text = "";
-				}
-				
-				if (row.Line3 != null)
-				{
-					optionLines[2].text = "- " + row.Line3;
-					optionLines[2].ID = row.GoToID3;
-					optionLines[2].y = optionLines[1].y - optionLines[2].height - 5;
-					mainStoryY += optionLines[2].height;
-				}
-				else
-				{
-					optionLines[2].text = "";
-				}
-				
-				if (row.Line4 != null)
-				{
-					optionLines[3].text = "- " + row.Line4;
-					optionLines[3].ID = row.GoToID4;
-					optionLines[3].y = optionLines[2].y - optionLines[3].height - 5;
-					mainStoryY += optionLines[3].height;
-				}
-				else
-				{
-					optionLines[3].text = "";
-				}
-				
-				if (row.Line5 != null)
-				{
-					optionLines[4].text = "- " + row.Line5;
-					optionLines[4].ID = row.GoToID5;
-					optionLines[4].y = optionLines[3].y - optionLines[4].height - 5;
-					mainStoryY += optionLines[4].height;
-				}
-				else
-				{
-					optionLines[4].text = "";
-				}
-				
-				_storyLine.y = FlxG.height - 70 - mainStoryY - _storyLine.height;
-				
-				break;
+				optionLines[i].text = "- " + currentScene.optionLines[i];
+				optionLines[i].ID = currentScene.gotoID[i];
+				if(i != 0)
+					optionLines[i].y = optionLines[i - 1].y - optionLines[i].height - 5;
+				mainStoryY += optionLines[i].height;
 			}
+			else
+			{
+				optionLines[i].text = "";
+			}
+		}
+		
+		_storyLine.y = FlxG.height - 70 - mainStoryY - _storyLine.height;
+	}
+	
+	function SetupEnd()
+	{
+		image.kill();
+		_exitText.kill();
+		
+		trace("Set to -1");
+		
+		_storyLine.y = 200;
+		optionLines[0].text = "- Go to main menu";
+		optionLines[0].ID = -1;
+		optionLines[0].y = FlxG.height - 100;
+		
+		trace(optionLines[0].ID);
+		
+		for (i in 0...4)
+		{
+			optionLines[i + 1].text = "";
 		}
 	}
 }
