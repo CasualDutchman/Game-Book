@@ -1,11 +1,3 @@
-/**
- * I will use one database slot to hold names of stories
- * Those will open a new database slot, based on that story name.
- * There databases contain the story and choices.
- * 
- * at the end it will be saved to a user database
- */
-
 package;
 
 import flixel.FlxState;
@@ -19,12 +11,15 @@ import flixel.addons.ui.FlxInputText;
 import flixel.util.FlxAxes;
 import flixel.text.FlxText;
 
+/**
+ * @author Pieter
+ */
 class PlayState extends FlxState
 {
 	private var currentStory:Int = 0;
 	
 	private var _exitText:FlxText;
-		
+
 	public var id:Int = 0;
 	public var storyID:Int = 0;
 	public var score:Int = 0;
@@ -45,14 +40,20 @@ class PlayState extends FlxState
 	var loader:Loader;
 	var currentScene:Scene;
 	
+	/**
+	 * On creation of the State
+	 */
 	override public function create():Void
-	{				
+	{			
+		//Load all Scenes from database
 		loader = new Loader(storyID);
 		
+		//Initialize fields
 		SetupScene();
 		
 		super.create();
 		
+		//Get data and refresh
 		ReloadScene();	
 	}
 	
@@ -110,6 +111,7 @@ class PlayState extends FlxState
 			}
 		}
 		
+		//update optionLines
 		for (field in optionLines)
 		{
 			if(field.overlapsPoint(FlxG.mouse.getScreenPosition()))
@@ -143,7 +145,7 @@ class PlayState extends FlxState
 						FlxG.switchState(new MenuState());
 						return;
 					}
-					else if(field.ID == -2) // when win
+					else if(field.ID == -2 || field.ID == -3) // when win - replay
 					{
 						var _sql = Sqlite.open(AssetPaths.database__db);
 						trace(deadInputText.text);
@@ -152,7 +154,16 @@ class PlayState extends FlxState
 						_sql.close();
 						
 						score = 0;
-						FlxG.switchState(new HallOfFameState());
+						
+						if (field.ID == -2)
+						{
+							FlxG.switchState(new SelectState());
+						}
+						else
+						{
+							FlxG.switchState(new HallOfFameState());
+						}
+						
 						return;
 					}
 				}
@@ -163,6 +174,7 @@ class PlayState extends FlxState
 			}
 		}
 		
+		//update exitText
 		if (_exitText.overlapsPoint(FlxG.mouse.getScreenPosition()))
 		{
 			_exitText.alpha = 0.3;
@@ -199,14 +211,16 @@ class PlayState extends FlxState
 	 */
 	public function ReloadScene()
 	{
-		image.kill();
-		
+		//variable that manipulates the Y value of the storyLine after all the options are setup. Dynamic
 		var mainStoryY:Float= 0;
 		
+		//Get the scene from the loader
 		currentScene = loader.GetScene(id);	
 		
 		_storyLine.text = currentScene.storyLine;
 		
+		//refresh image
+		image.kill();
 		image.loadGraphic("assets/images/" + currentScene.imagePath + ".png");
 		image.reset((FlxG.width / 2) - 60, (FlxG.height / 2) - 34 - 100);
 		
@@ -229,15 +243,18 @@ class PlayState extends FlxState
 			return;
 		}
 		
-		if (currentScene.hasTimer)
+		if (currentScene.hasTimer) // when MaxTimer != 0, make a timer
 		{
 			isTimer = currentScene.hasTimer;
 			maxTimer = currentScene.maxTimer;
 			timerID = currentScene.timerDefault;
+			
+			timerSprite = new FlxSprite((FlxG.width - 1000) / 2, 550);
+			timerSprite.makeGraphic(1000, 10);
 			add(timerSprite);
 		}
 		
-		for (i in 0...5)
+		for (i in 0...5) // update all questions
 		{
 			if (currentScene.optionLines[i] != null)
 			{
@@ -256,6 +273,10 @@ class PlayState extends FlxState
 		_storyLine.y = FlxG.height - 70 - mainStoryY - _storyLine.height;
 	}
 	
+	/**
+	 * Setup scene for winning or losing
+	 * @param	_i negative ID handling for exiting
+	 */
 	function SetupEnd(_i:Int)
 	{
 		image.kill();
@@ -269,9 +290,16 @@ class PlayState extends FlxState
 		}
 		
 		_storyLine.y = 200;
-		optionLines[0].text = "- Go to main menu";
-		optionLines[0].ID = _i;
-		optionLines[0].y = FlxG.height - 100;
 		
+		optionLines[0].text = "- Replay";
+		optionLines[0].ID = _i;
+		optionLines[0].y = FlxG.height - 130;
+		
+		if (_i == -2)
+		{
+			optionLines[1].text = "- Go to Hall of Fame";
+			optionLines[1].ID = -3;
+			optionLines[1].y = FlxG.height - 100;
+		}
 	}
 }

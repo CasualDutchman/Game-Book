@@ -9,6 +9,9 @@ import flixel.util.FlxAxes;
 import sys.db.Sqlite;
 import flixel.util.FlxColor;
 
+/**
+ * @author Pieter
+ */
 class SelectState extends FlxState
 {
 	var newPlayState:PlayState;
@@ -18,12 +21,16 @@ class SelectState extends FlxState
 	public var _storyLine:FlxText;
 	public var optionLines:Array<FlxText> = new Array<FlxText>();
 	
+	/**
+	 * On creation of the State
+	 */
 	override public function create():Void
-	{				
+	{	
+		//open connection to database
 		var sql = Sqlite.open(AssetPaths.database__db);
-		
 		var rset = sql.request("SELECT * FROM Stories");
 		
+		//setup header text
 		_storyLine = new FlxText(10, FlxG.height - 200, 0, "What timeline shall we pick?", 20);
 		_storyLine.wordWrap = true;
 		_storyLine.fieldWidth = FlxG.width - (_storyLine.x * 2);
@@ -31,6 +38,7 @@ class SelectState extends FlxState
 		_storyLine.alignment = FlxTextAlign.CENTER;
 		add(_storyLine);
 		
+		//setup options from database
 		for ( row in rset ) 
 		{
 			var newText:FlxText = new FlxText(10, _storyLine.y + 30 + (row.ID * 30), row.Name + "", 20);

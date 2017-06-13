@@ -8,61 +8,62 @@ import flixel.FlxG;
 import flixel.util.FlxAxes;
 import sys.db.Sqlite;
 
+/**
+ * @author Pieter
+ */
 class MenuState extends FlxState
-{
-	var newGameButton:FlxButton;
-	var continueGameButton:FlxButton;
-	var hallOfFameButton:FlxButton;
-	
-	private var sql:sys.db.Connection;
-	
+{		
 	var goToStory:Int;
 	var goToScene:Int;
 	var goToScore:Int;
 	
+	/**
+	 * On creation of the State
+	 */
 	override public function create():Void
 	{				
-		sql = Sqlite.open(AssetPaths.database__db);
+		//open database
+		var sql = Sqlite.open(AssetPaths.database__db);
+		var userdata = sql.request("SELECT * FROM User WHERE ID = 0");
 		
-		var userdata = sql.request("SELECT * FROM User");
-		
+		//setup Continue data
 		for (data in userdata)
 		{
-			if (data.ID == 0)
-			{
-				goToScene = data.Scene;
-				goToStory = data.Story;
-				goToScore = data.Score;
-			}
+			goToScene = data.Scene;
+			goToStory = data.Story;
+			goToScore = data.Score;
 		}
 		
+		sql.close();
+		
+		//Setup ui
 		FlxG.camera.zoom = 2;
 		
-		newGameButton = new FlxButton(0, 250, "New Game", OnNewButton);
-		newGameButton.loadGraphic(AssetPaths.button__png, true, 160, 40);
-		newGameButton.graphicLoaded();
-		newGameButton.updateHitbox();
-		newGameButton.label.offset.add(0, -10);
-		newGameButton.screenCenter(FlxAxes.X);
-		add(newGameButton);
+		AddButton(0, 250, "New Game", OnNewButton);
 		
-		continueGameButton = new FlxButton(0, 300, "Continue", OnContinueButton);
-		continueGameButton.loadGraphic(AssetPaths.button__png, true, 160, 40);
-		continueGameButton.graphicLoaded();
-		continueGameButton.updateHitbox();
-		continueGameButton.label.offset.add(0, -10);
-		continueGameButton.screenCenter(FlxAxes.X);
-		add(continueGameButton);
+		AddButton(0, 300, "Continue", OnContinueButton);
 		
-		hallOfFameButton = new FlxButton(0, 350, "Hall of fame", OnHallOfFame);
-		hallOfFameButton.loadGraphic(AssetPaths.button__png, true, 160, 40);
-		hallOfFameButton.graphicLoaded();
-		hallOfFameButton.updateHitbox();
-		hallOfFameButton.label.offset.add(0, -10);
-		hallOfFameButton.screenCenter(FlxAxes.X);
-		add(hallOfFameButton);
+		AddButton(0, 350, "Hall of fame", OnHallOfFame);
 		
 		super.create();
+	}
+	
+	/**
+	 * Add a button to the State
+	 * @param	_x position X
+	 * @param	_y position y
+	 * @param	_text display text
+	 * @param	_click callback
+	 */
+	function AddButton(_x:Int, _y:Int, _text:String, _click:Void->Void)
+	{
+		var _button = new FlxButton(_x, _y, _text, _click);
+		_button.loadGraphic(AssetPaths.button__png, true, 160, 40);
+		_button.graphicLoaded();
+		_button.updateHitbox();
+		_button.label.offset.add(0, -10);
+		_button.screenCenter(FlxAxes.X);
+		add(_button);
 	}
 	
 	/**
@@ -78,11 +79,13 @@ class MenuState extends FlxState
 	 */
 	function OnContinueButton() 
 	{
+		//create a state to continue with
 		var newPlayState:PlayState = new PlayState();
 		newPlayState.storyID = goToStory;
 		newPlayState.id = goToScene;
 		newPlayState.score = goToScore;
 		
+		//when the story was finished or when failed
 		if (goToScene == -1 || goToStory == -1)
 		{
 			FlxG.switchState(new SelectState());
@@ -91,7 +94,6 @@ class MenuState extends FlxState
 		{
 			FlxG.switchState(newPlayState);
 		}
-		sql.close();
 	}
 	
 	/**
