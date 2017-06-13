@@ -10,5 +10,5 @@ class Main extends Sprite
 		super();
 		//creating the flixel game state
 		addChild(new FlxGame(0, 0, MenuState));
-	}
+	}	
 }

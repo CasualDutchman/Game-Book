@@ -24,10 +24,7 @@ class PlayState extends FlxState
 	private var currentStory:Int = 0;
 	
 	private var _exitText:FlxText;
-	
-	private var sql:sys.db.Connection;
-	var rset:sys.db.ResultSet;
-	
+		
 	public var id:Int = 0;
 	public var storyID:Int = 0;
 	public var score:Int = 0;
@@ -49,16 +46,10 @@ class PlayState extends FlxState
 	var currentScene:Scene;
 	
 	override public function create():Void
-	{		
-		sql = Sqlite.open(AssetPaths.database__db);
-		
-		rset = sql.request("SELECT * FROM " + sql.quote("story" + storyID + ""));
-		
+	{				
 		loader = new Loader(storyID);
 		
 		SetupScene();
-		
-		
 		
 		super.create();
 		
@@ -136,14 +127,17 @@ class PlayState extends FlxState
 						
 						score += 10;
 						
+						var sql = Sqlite.open(AssetPaths.database__db);
 						sql.request("UPDATE User SET Story = " + storyID + ", Scene = " + id + ", Score = " + score + " WHERE ID = 0");
+						sql.close();
 						
 						return;
 					}
 					else if(field.ID == -1) // when lose
 					{
-						sql.request("UPDATE User SET Story = " + -1 + ", Scene = " + -1 + ", Score = " + 0 + " WHERE ID = 0");
-						sql.close();
+						var _sql = Sqlite.open(AssetPaths.database__db);
+						_sql.request("UPDATE User SET Story = " + -1 + ", Scene = " + -1 + ", Score = " + 0 + " WHERE ID = 0");
+						_sql.close();
 						
 						score = 0;
 						FlxG.switchState(new MenuState());
@@ -151,9 +145,11 @@ class PlayState extends FlxState
 					}
 					else if(field.ID == -2) // when win
 					{
-						sql.request("INSERT INTO User (Name,Scene,Story,Score) VALUES ('" + deadInputText.text + "'," + id + "," + storyID + "," + score + ")");
-						sql.request("UPDATE User SET Story = " + -1 + ", Scene = " + -1 + ", Score = " + 0 + " WHERE ID = 0");
-						sql.close();
+						var _sql = Sqlite.open(AssetPaths.database__db);
+						trace(deadInputText.text);
+						_sql.request("INSERT INTO User (Name,Scene,Story,Score) VALUES ('" + deadInputText.text + "'," + id + "," + storyID + "," + score + ")");
+						_sql.request("UPDATE User SET Story = " + -1 + ", Scene = " + -1 + ", Score = " + 0 + " WHERE ID = 0");
+						_sql.close();
 						
 						score = 0;
 						FlxG.switchState(new HallOfFameState());
@@ -173,6 +169,7 @@ class PlayState extends FlxState
 			
 			if (FlxG.mouse.justReleased)
 			{
+				var sql = Sqlite.open(AssetPaths.database__db);
 				sql.request("UPDATE User SET Story = " + storyID + ", Scene = " + id + ", Score = " + score + " WHERE ID = 0");
 				sql.close();
 				FlxG.switchState(new MenuState());
@@ -215,19 +212,21 @@ class PlayState extends FlxState
 		
 		if (currentScene.winLose == 1) // lose/die
 		{					
-			SetupEnd();
+			SetupEnd(-1);
 			return;
 		}
 		
 		if (currentScene.winLose == 2) // Win
 		{					
-			SetupEnd();
+			SetupEnd(-2);
 			
 			deadInputText = new FlxInputText(30, 250, 300, "Enter name", 20);
 			deadInputText.screenCenter(FlxAxes.X);
 			deadInputText.maxLength = 20;
 			deadInputText.focusGained = function(){ deadInputText.text = ""; deadInputText.caretIndex = 0; };
 			add(deadInputText);
+			
+			return;
 		}
 		
 		if (currentScene.hasTimer)
@@ -257,23 +256,22 @@ class PlayState extends FlxState
 		_storyLine.y = FlxG.height - 70 - mainStoryY - _storyLine.height;
 	}
 	
-	function SetupEnd()
+	function SetupEnd(_i:Int)
 	{
 		image.kill();
 		_exitText.kill();
 		
 		trace("Set to -1");
 		
+		for (i in 0...5)
+		{
+			optionLines[i].text = "";
+		}
+		
 		_storyLine.y = 200;
 		optionLines[0].text = "- Go to main menu";
-		optionLines[0].ID = -1;
+		optionLines[0].ID = _i;
 		optionLines[0].y = FlxG.height - 100;
 		
-		trace(optionLines[0].ID);
-		
-		for (i in 0...4)
-		{
-			optionLines[i + 1].text = "";
-		}
 	}
 }
